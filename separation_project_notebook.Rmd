@@ -1,0 +1,139 @@
+---
+title: "analysis of discrete data project notebook: separation problem"
+ipsum_meta:
+  author: J. M. Reis
+output: 
+  hrbrthemes::ipsum:
+    toc: true
+---
+
+```{r include=FALSE}
+knitr::opts_chunk$set(fig.retina=2)
+```
+
+```{r ipsum_setup, message=FALSE, warning=FALSE, cache=FALSE, echo=FALSE}
+### packages
+packs <- c("tidyverse", "furrr", "hrbrthemes")
+for (pack in packs) {
+  
+  if (pack %in% installed.packages()){
+    
+    require(pack, character.only = TRUE)
+    
+  } else {
+    
+    install.packages(pack)
+    require(pack, character.only = TRUE)
+    
+  }
+}
+## turn off scientific notation
+options(scipen=999)
+## plot settings: default
+theme_set(theme_minimal())
+```
+
+
+# Problem setting
+
+
+
+There are two main reasons which may lead to a logistic regression's parameters being non-identifiable (Gelman, Hill, and Vehtari, 2021, p. 256):
+  * **collinearity**, that is linear association between predictor values, does not allow us to obtain separate estimates of the individual parameters $\beta_1, ..., \beta_n$;
+  * **separation problem** which will be our focus
+
+## Logistic regression
+
+Logistic regression is a generalized linear model for binary data. It models the conditional distribution of $Y$, a random vector composed of dichotomous observations $(y_1, ...y_n) \in \{0,1\}$, given $X$, a vector of co-variate variables $(x_i, ...,x_n)$, as a Bernoulli distribution, or $Binomial(1, \pi)$.
+
+$$
+y_i|x_i \sim \text{Binomial}(1, \pi_i) 
+$$
+Where $\pi_i$ is assumed to be a function of a linear component a linear component, $\alpha + \beta X_i$, which is modeled using a logit link function.
+
+$$
+g(\pi_i) = logit \: \pi_i = log \: \frac{\pi_i}{1 - \pi_i} = \alpha + \beta x
+$$
+
+
+Notice that the inverse function allows us to map any real number produced by the linear predictor on to $(0,1)$.
+
+$$
+Pr(Y=1|X) = logit^{-1} \pi_i = \frac{e^{\alpha + \beta x}}{1 + e^{\alpha + \beta x}}
+$$
+
+### Maximum likelihood estimation
+
+For now we will assume that $X \sim N(0,1)$ so that we can drop the intercept from the equations.
+The maximum likelihood estimation is derived from the product of the probability density function of $Y|X$ for each $(x_1, x_2, ..., x_n)$.
+
+$$
+f(y|\beta, X) = \prod_{i=1}^n \pi_i^{y_i} (1-\pi_i)^{1-{y_i}}
+$$
+
+The likelihood function estimates the likelihood of observing $y$ given fixed values of $\beta$.
+
+$$
+L(\beta|x1, ..., x_n) = \prod_{i=1}^N \pi_i^{y_i} (1-\pi_i)^{1-{y_i}}
+$$
+Which we can log and simplify so as to obtain the log-likelihood function.
+
+$$
+l(\beta|x1, ..., x_n)  = log \: L(\beta|x1, ..., x_n ) \\
+= \sum_{i=1}^n y_i \: log \: \pi_i + (1-y_i) \: log \: (1-\pi_i) \\
+= \sum_{i=1}^n y_i \: log (\frac{e^{\beta x_i}}{1 + e^{\beta x_i}}) + (1-y_i) \: log(\frac{1}{1 + e^{ \beta x_i}}) \\
+= \sum_{i=1}^n y_i(\beta x_i) - log(1 + e^{\beta x_i}) 
+$$
+
+To find the MLE find the first derivative with respect to beta (with a negative second derivative) which equals 0.
+
+$$
+\frac{\partial \: l(\beta|x1, ..., x_n)}{\partial \beta} = \sum_{i=1}^n y_i x_i - \pi_ix_i = \sum_{i=1}^nx_i(y_i - \pi_i) \overset{\text{set}}= 0  
+$$
+
+# The separation problem
+
+
+```{r}
+logistic_sim <- function(n = 100, beta = 0.5, seed = 1234){
+  
+  set.seed(seed)
+  alpha <- 0 # centered data
+  df <- tibble(x = rnorm(n, 0, 1)) %>%
+    mutate(pi = plogis((alpha + beta * x)), ## P(Y = 1| X) = logit^-1 \pi_i = \frac{exp(\alpha + x * \beta)}{1 + exp(\alpha + x * \beta)}
+           y = rbinom(n, 1, prob = pi))
+  
+  return(df)
+}
+
+make_separation_plot <- function(n = 100, beta = 0.5, seed = 1234) {
+  
+  df <- logistic_sim(n = n, beta = beta, seed = seed)
+  
+  p <- df %>%
+    ggplot(aes(x = x, y = y)) + 
+    geom_point() +
+    annotate("rect", xmin = -Inf, xmax = 0, ymin = -Inf, ymax = .5, fill = "palegreen", alpha = 0.5) +
+    annotate("rect", xmin = 0, xmax = Inf, ymin = -Inf, ymax = .5, fill = "#F8766D", alpha = 0.5)  +
+    annotate("rect", xmin = -Inf, xmax = 0, ymin = Inf, ymax = .5, fill = "#F8766D", alpha = 0.5) +
+    annotate("rect", xmin = 0, xmax = Inf, ymin = Inf, ymax = .5, fill = "palegreen", alpha = 0.5) +
+    stat_smooth(method = "glm", 
+                method.args = list(family = "binomial"),
+                se = FALSE) +
+    labs(subtitle = bquote(beta == .(beta)))
+  
+  return(p) 
+}
+
+params <- c(0.5, 1, 2, 4)
+plots <- map(params, ~make_separation_plot(n = 25, beta = .x, seed = 123))
+cowplot::plot_grid(plotlist = plots)
+
+
+```
+
+
+```{r bib, include=FALSE}
+# KEEP THIS AT THE END OF THE DOCUMENT TO GENERATE A LOCAL bib FILE FOR PKGS USED
+knitr::write_bib(sub("^package:", "", grep("package", search(), value=TRUE)), file='skeleton.bib')
+```
