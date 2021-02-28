@@ -21,8 +21,8 @@ logistic_sim <- function(n = 100, beta = 0.5, seed = 1234){
   ### simulate population data for a logistic regression y|x ~ logit^{-1} \pi(x)
   # model details:
       # y|x ~ Binomial(1, \pi) \\
-      # \pi = logit^{-1} \pi = \frac{exp(\alpha + \beta X)}{1 + exp(\alpha + \beta X)}
-      # X ~ N(0,1)
+      # \pi = logit^{-1} \pi = \frac{exp(\alpha + \beta X)}{1 + exp(\alpha + \beta X)} \\
+      # X ~ N(0,1) \\
       # \alpha = 0
   # n: int; size of the population data to simulate. 
   # beta: numerical; true beta parameter value used to generate the population data, i.e. \pi for y ~ Binomial(1, \pi)
@@ -51,7 +51,7 @@ sep_fun <- function(df, quasi_tresh = 0.92, kosmidis = FALSE) {
   ## check if there is complete separation: Rule based
   out <- df %>%
     mutate(overlap_complete = if_else(x < 0 & y == 0 | x > 0 & y == 1,1,0),
-           overlap_quasi = if_else(x <= 0 & y == 0 | x >= 0 & y == 1,1,0)) %>%
+           overlap_quasi = if_else(x <= 0 & y == 0,1,0)) %>%
     mutate(n_complete = sum(overlap_complete),
            n_quasi = sum(overlap_quasi)) %>%
     mutate(complete_separation = n_complete == nrow(.),
