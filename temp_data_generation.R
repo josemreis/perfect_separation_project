@@ -106,7 +106,7 @@ if (!dir.exists("data")){
   dir.create("data")
 }
 ## all samples
-write_csv(all_samples, gzip("data/all_samples.csv.gz"))
+write_csv(all_samples, gzfile("data/all_samples.csv.gz"))
 ## samples with separation issues
-write_csv(all_samples, gzip("data/separation_samples.csv.gz"))
+write_csv(sep_samples, gzfile("data/separation_samples.csv.gz"))
 
