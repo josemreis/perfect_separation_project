@@ -15,18 +15,38 @@ for (pack in packs) {
 }
 
 ### function for generating logistic regression data
-logistic_sim <- function(n = 100, beta1 = 0.5, seed = 1234){
+logistic_sim <- function(n = 100, beta = 0.5, seed = 1234){
+  
+  ####################################################################################################################
+  ### simulate population data for a logistic regression y|x ~ logit^{-1} \pi(x)
+  # model details:
+      # y|x ~ Binomial(1, \pi) \\
+      # \pi = logit^{-1} \pi = \frac{exp(\alpha + \beta X)}{1 + exp(\alpha + \beta X)}
+      # X ~ N(0,1)
+      # \alpha = 0
+  # n: int; size of the population data to simulate. 
+  # beta: numerical; true beta parameter value used to generate the population data, i.e. \pi for y ~ Binomial(1, \pi)
+  # seed: int; random seed user defined
+  #####################################################################################################################
   
   set.seed(seed)
   alpha <- 0 # centered data
   df <- tibble(x = rnorm(n, 0, 1)) %>%
-    mutate(pi = plogis((alpha + beta * x)), ## P(Y = 1| X) = logit^-1 \pi(x) = \frac{exp(\alpha + x * \beta)}{1 + exp(\alpha + x * \beta)}
+    mutate(pi = plogis((alpha + beta * x)), 
            y = rbinom(n, 1, prob = pi))
   
   return(df)
 }
-## count the number of samples with complete separation out of 100 samples of size 25
+
+### function for detecting separation
 sep_fun <- function(df, quasi_tresh = 0.92, kosmidis = FALSE) {
+  
+  ##################################################################################################################################################################
+  # assess whether the logistic regression data contains separation issues
+  # df: data frame object
+  # quasi_tresh: numerical; treshhold to consider quasi-complete separation; proportion of overlap. This will be double checked using Kosmidis and Konis algorithm
+  # kosmidis: logical. Use Kosmidis and Konis algorithm?
+  ##################################################################################################################################################################
   
   ## check if there is complete separation: Rule based
   out <- df %>%
@@ -52,7 +72,15 @@ sep_fun <- function(df, quasi_tresh = 0.92, kosmidis = FALSE) {
   return(out)  
 }
 
-generate_separation_data <- function(population_size = 10000, sample_size = 50, beta = 4, seed = NULL){
+generate_separation_data <- function(population_size = 10000, sample_size = 50, beta = 4, seed = NULL) {
+  
+  ####################################################################################################################
+  ### simulate population data and take #pop/sample_n samples of data for y|x ~ logit^{-1} \pi(x)
+  # df: int; size of the population data to simulate. Uses logistic_sic, see above.
+  # sample_size: int; size of the samples to draw from the population
+  # beta: numerical; true beta parameter value used to generate the population data, i.e. \pi for y ~ Binomial(1, \pi)
+  # seed: int; random seed can be user defined or, if NULL, generated randomly within the function
+  #####################################################################################################################
   
   ### simulate population data
   if (length(seed) == 0) {
@@ -64,7 +92,7 @@ generate_separation_data <- function(population_size = 10000, sample_size = 50, 
     random_seed <- seed
     
   }
-  ### simulate population level data with a high regression coefficient
+  ### simulate population level data 
   population <- logistic_sim(n = population_size, beta = beta, seed = random_seed)
   ### draw several samples and assess whether there is identification: (i) rules based; (ii) if (i) assess using kosmidis et al algorithm
   set.seed(random_seed)
