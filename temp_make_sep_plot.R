@@ -17,7 +17,7 @@ for (pack in packs) {
 options(scipen=999)
 
 ### function for generating logistic regression data
-logistic_sim <- function(n = 100, beta1 = 0.5, seed = 1234){
+logistic_sim <- function(n = 100, beta = 0.5, seed = 1234){
   
   set.seed(seed)
   alpha <- 0 # centered data
@@ -53,3 +53,16 @@ params <- c(0.5, 1, 2, 4)
 plots <- map(params, ~make_separation_plot(n = 25, beta = .x, seed = 123))
 p1 <- cowplot::plot_grid(plotlist = plots)
 p1
+
+set.seed(1234)
+beta <- 5
+sample_size <- c(25, 75, 150, 50000)
+plots <- map(sample_size, ~make_separation_plot(n = .x, beta = beta, seed = 123))
+cowplot::plot_grid(plotlist = plots)
+
+
+
+beta <- 3
+sample_size <- c(25, 75, 150, 50000)
+plots <- map(sample_size, ~make_separation_plot(n = .x, beta = beta, seed = 123))
+cowplot::plot_grid(plotlist = plots)

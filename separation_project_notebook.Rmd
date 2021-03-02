@@ -1,5 +1,6 @@
 ---
 title: "analysis of discrete data project notebook: separation problem"
+bibliography: skeleton.bib
 ipsum_meta:
   author: J. M. Reis
 output: 
@@ -91,7 +92,123 @@ $$
 \frac{\partial \: l(\beta|x1, ..., x_n)}{\partial \beta} = \sum_{i=1}^n y_i x_i - \pi_ix_i = \sum_{i=1}^nx_i(y_i - \pi_i) \overset{\text{set}}= 0  
 $$
 
+There is no close form solution. This maximization problem needs to be solved numerically. The most popular numerical method is the Newton-Raphson algorithm.
+
+...
+
 # The separation problem
+
+* **complete separation**
+
+Complete separation occurs in the sample if there is a vector of parameter values $$\beta = (\beta_1, ..., \beta_n)$$ which partitions the explanatory value at $T$ in such a way that in one side the dependent variable is always $y_i = 1$ and on the other it is always $y_i = 0$ (see @albert1984existence)
+
+$$
+\beta x_i > T \: \text{whenever} \: y_i = 1,\\
+\beta x_i < T \: \text{whenever} \: y_i = 0
+$$
+
+This occurs when the linear predictor component of the model can perfectly predict the dependent variable. For example, take the following model
+
+$$
+y_i \sim Binomial(1, \pi_x)\\
+\pi_x = \frac{e^{\alpha +5x_i}}{1 + e^{\alpha + 5x_i}} \\
+\alpha = 0
+$$
+
+```{r}
+### function for generating logistic regression data
+logistic_sim <- function(n = 100, beta = 0.5, seed = NULL){
+  
+  ####################################################################################################################
+  ### simulate population data for a logistic regression y|x ~ logit^{-1} \pi(x)
+  # model details:
+      # y|x ~ Binomial(1, \pi) \\
+      # \pi = logit^{-1} \pi = \frac{exp(\alpha + \beta X)}{1 + exp(\alpha + \beta X)} \\
+      # X ~ N(0,1) \\
+      # \alpha = 0
+  # n: int; size of the population data to simulate. 
+  # beta: numerical; true beta parameter value used to generate the population data, i.e. \pi for y ~ Binomial(1, \pi)
+  # seed: int; random seed user defined
+  #####################################################################################################################
+  
+    ### simulate population data
+  if (length(seed) == 0) {
+    
+    random_seed <- sample(.Random.seed, 1) 
+    
+  } else {
+    
+    random_seed <- seed
+    
+  }
+  alpha <- 0 # centered data
+  df <- tibble(x = rnorm(n, 0, 1)) %>%
+    mutate(pi = plogis((alpha + beta * x)), 
+           y = rbinom(n, 1, prob = pi),
+           random_seed = random_seed)
+  
+  return(df)
+}
+
+```
+
+
+Such a large coefficient is expected to generate some samples with perfect separation. For example, in this randomly obtained sample, $T = 0$ and whenever $X\beta > 0, Y = 1$ and vice-versa. This is reasonable since, for example, at  $\bar{x} = 0$ the slope of the logistic curve is $\frac{\beta e^{0}}{(1 + \beta e^{0})²} = \frac{5}{4} = 1.25$, that is, increasing x at its sample mean value by one unit is associated with a difference in predicted probabilities for $P(y = 1|x)$ of $logit^{-1} 1.25 \approx 0.78$. 
+
+
+```{r}
+make_separation_plot <- function(n = 100, beta = 0.5, seed = 1234) {
+  
+  df <- logistic_sim(n = n, beta = beta, seed = seed)
+  
+  p <- df %>%
+    ggplot(aes(x = x, y = y)) + 
+    geom_point() +
+    annotate("rect", xmin = -Inf, xmax = mean(df$x), ymin = -Inf, ymax = .5, fill = "palegreen", alpha = 0.5) +
+    annotate("rect", xmin = mean(df$x), xmax = Inf, ymin = -Inf, ymax = .5, fill = "#F8766D", alpha = 0.5)  +
+    annotate("rect", xmin = -Inf, xmax = mean(df$x), ymin = Inf, ymax = .5, fill = "#F8766D", alpha = 0.5) +
+    annotate("rect", xmin = mean(df$x), xmax = Inf, ymin = Inf, ymax = .5, fill = "palegreen", alpha = 0.5) +
+    stat_smooth(method = "glm", 
+                method.args = list(family = "binomial"),
+                se = FALSE) +
+    labs(subtitle = bquote(beta == .(beta) ~ "; " ~ n == .(n)),
+         y = bquote(logit^-1 ~pi[(x)]))
+  
+  return(p) 
+}
+
+p <- make_separation_plot(n = 25, beta = 5, seed = 123)
+p
+```
+
+
+* **quasi complete separation**
+
+Quasi complete separation occurs whenever the linear component of the model perfectly discriminates the independent variable *most of the time*. That is, there is at least one vector of parameter values $$\beta = (\beta_1, ..., \beta_n)$$ which partitions the explanatory value at $T$ in such a way that the following equality holds for at least onew $y_i$ [@albert1984existence].
+
+$$
+\beta x_i \geq  T \: \text{whenever} \: y_i = 1 \\ 
+\beta x_i \leq  T \: \text{whenever} \: y_i = 0 
+$$
+
+$$
+y_i \sim Binomial(1, \pi_x)\\
+\pi_x = \frac{e^{\alpha + 3.2x_i}}{1 + e^{\alpha + 3.2x_i}} \\
+\alpha = 0
+$$
+
+
+```{r}
+p <- make_separation_plot(n = 25, beta = 3, seed = 123)
+p
+```
+
+
+* **Factors influencing**
+
+* small and sparse datasets;
+* strength of the linear association;
+* multicollinearity [@zeng2019relationship]
 
 
 ```{r}
@@ -106,34 +223,96 @@ logistic_sim <- function(n = 100, beta = 0.5, seed = 1234){
   return(df)
 }
 
-make_separation_plot <- function(n = 100, beta = 0.5, seed = 1234) {
-  
-  df <- logistic_sim(n = n, beta = beta, seed = seed)
-  
-  p <- df %>%
-    ggplot(aes(x = x, y = y)) + 
-    geom_point() +
-    annotate("rect", xmin = -Inf, xmax = 0, ymin = -Inf, ymax = .5, fill = "palegreen", alpha = 0.5) +
-    annotate("rect", xmin = 0, xmax = Inf, ymin = -Inf, ymax = .5, fill = "#F8766D", alpha = 0.5)  +
-    annotate("rect", xmin = -Inf, xmax = 0, ymin = Inf, ymax = .5, fill = "#F8766D", alpha = 0.5) +
-    annotate("rect", xmin = 0, xmax = Inf, ymin = Inf, ymax = .5, fill = "palegreen", alpha = 0.5) +
-    stat_smooth(method = "glm", 
-                method.args = list(family = "binomial"),
-                se = FALSE) +
-    labs(subtitle = bquote(beta == .(beta)))
-  
-  return(p) 
-}
-
-params <- c(0.5, 1, 2, 4)
-plots <- map(params, ~make_separation_plot(n = 25, beta = .x, seed = 123))
+n <- c(20, 30, 100, 5000)
+plots <- map(n, ~make_separation_plot(n = .x, beta = 3.2, seed = 1234))
 cowplot::plot_grid(plotlist = plots)
 
 
 ```
 
 
-```{r bib, include=FALSE}
-# KEEP THIS AT THE END OF THE DOCUMENT TO GENERATE A LOCAL bib FILE FOR PKGS USED
-knitr::write_bib(sub("^package:", "", grep("package", search(), value=TRUE)), file='skeleton.bib')
+* **samples with complete separation do not have MLEs**
+
+For now we will assume that $X \sim N(0,1)$ so that we can drop the intercept from the equations.
+The maximum likelihood estimation is derived from the product of the probability density function of $Y|X$ for each $(x_1, x_2, ..., x_n)$.
+
+$$
+f(y|\beta, X) = \prod_{i=1}^n \pi_i^{y_i} (1-\pi_i)^{1-{y_i}}
+$$
+
+The likelihood function estimates the likelihood of observing $y$ given fixed values of $\beta$.
+
+$$
+L(\beta|x1, ..., x_n) = \prod_{i=1}^N \pi_i^{y_i} (1-\pi_i)^{1-{y_i}}
+$$
+
+Which we can log and simplify so as to obtain the log-likelihood function.
+
+
+$$
+l(\beta|x1, ..., x_n)  = log \: L(\beta|x1, ..., x_n ) \\
+= \sum_{i=1}^n y_i \: log \: \pi_i + (1-y_i) \: log \: (1-\pi_i) \\
+= \sum_{i=1}^n y_i \: log (\frac{e^{\beta x_i}}{1 + e^{\beta x_i}}) + (1-y_i) \: log(\frac{1}{1 + e^{ \beta x_i}}) \\
+= \sum_{i=1}^n y_i(1 + \beta x_i) - log(1 + e^{\beta x_i})  
+$$
+
+To find the MLE find the first derivative with respect to beta (with a negative second derivative) which equals 0.
+
+
+$$
+\frac{\partial \: l(\beta|x1, ..., x_n)}{\partial \beta} = \sum_{i=1}^n y_i x_i - \pi_ix_i = \sum_{i=1}^nx_i(y_i - \pi_i) \overset{\text{set}}= 0  
+$$
+
+
+There is no close form solution. This maximization problem needs to be solved numerically. The most popular numerical method is the Newton-Raphson algorithm.
+
+The problem with is that since the data is perfectly separated, the likelihood function will have no maxima (or minimum in the case of the negative likelihood) and monotonicly tend to infinity. Below we compute the negative likelihood using the model and sample described above for two different samples, one with perfect separation and another without. Notice how the former diverges to infinity while the later converges to a value around the true parameter.
+
+
+```{r}
+plot_compare_likelihoods_n <- function (beta, n, up_to = 20){
+  
+  ## Define the negative log likelihood function
+  logl <- function(beta,x,y){
+    y <- y
+    x <- as.matrix(x)
+    loglik <- sum(-y*log(1 + exp(-(x%*%beta))) - (1-y)*log(1 + exp(x%*%beta)))
+    ## turn to df
+    out <- tibble(loglikelihood = loglik,
+             x = x,
+             beta = beta,
+             y = y) %>%
+      mutate(overlap = if_else((x * beta > 0 & y == 1) | (x * beta < 0 & y == 0), 1, 0))
+    return(out)
+  }
+  
+  plot_list <- list()
+  for (i in 1:length(n)) {
+    b <- beta
+    s <- n[i]
+    print(b)
+    ## generate the data given the beta
+    d <- logistic_sim(beta = b, n = s, seed = 123)
+    ## copute the log likelihood and make the plit
+    df <-  map_df(seq(from = 0.5, to = b + up_to, by = 0.1), ~ logl(x = d$x, y = d$y, beta = .x)) 
+    p <- df %>%
+      ggplot(aes(beta, loglikelihood)) + 
+      geom_line() + 
+      geom_vline(xintercept = b, color = "red", linetype = "dashed") +
+      scale_x_continuous(breaks = seq(from = 0, to = up_to, by = 5)) + 
+      labs(y = "neg. log likelihood",subtitle = paste0("n = ", s, "; proportion separated = ", sum(df$overlap)/nrow(df)))
+    
+    plot_list[[i]] <- p
+    
+  }
+  
+  return(plot_list)
+  
+}
+cowplot::plot_grid(plotlist = plot_compare_likelihoods_n(beta = 5, n = c(25, 100)))
+
 ```
+
+
+# Proposed solutions
+

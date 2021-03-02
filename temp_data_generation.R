@@ -39,7 +39,7 @@ logistic_sim <- function(n = 100, beta = 0.5, seed = 1234){
 }
 
 ### function for detecting separation
-sep_fun <- function(df, quasi_tresh = 0.92, kosmidis = FALSE) {
+sep_fun <- function(df, quasi_tresh = 0.90, kosmidis = FALSE) {
   
   ##################################################################################################################################################################
   # assess whether the logistic regression data contains separation issues
@@ -85,7 +85,7 @@ generate_separation_data <- function(population_size = 10000, sample_size = 50, 
   ### simulate population data
   if (length(seed) == 0) {
     
-    random_seed <- sample(1:99999999, 1) 
+    random_seed <- sample(.Random.seed, 1) 
     
   } else {
     
@@ -108,7 +108,7 @@ generate_separation_data <- function(population_size = 10000, sample_size = 50, 
            population_size = population_size,
            sample_size = sample_size,
            random_seed = random_seed,
-           population_id = paste(random_seed, beta, sep = "_"), ## add beta to population id case there were overlapping seeds
+           population_id = paste(abs(random_seed), beta, sep = "_"), ## add beta to population id case there were overlapping seeds. Will take the absolute value of the seed for id purposes (original seed stored)
            sample_id = paste(sample_id, population_id, sep = "_"),
            separation = if_else(complete_separation == TRUE, "1", "0"),
            quasi_separation = if_else(complete_separation == FALSE & kosmidis_sep == TRUE, "1", "0")) %>%
@@ -119,7 +119,7 @@ generate_separation_data <- function(population_size = 10000, sample_size = 50, 
 ### generate the data
 ## prepare the input grid: varying population parameters and sample sizes
 set.seed(1234)
-betas <- sample(seq(from = 0, to = 6, by = 0.01), 20)
+betas <- sample(seq(from = 0, to = 7, by = 0.1), 40)
 sample_size <- c(25, 50, 75, 100)
 simulation_grid <- expand_grid(betas, sample_size)
 ### generate the populations and draw pop/sample_size samples
