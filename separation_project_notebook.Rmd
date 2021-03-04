@@ -316,3 +316,50 @@ cowplot::plot_grid(plotlist = plot_compare_likelihoods_n(beta = 5, n = c(25, 100
 
 # Proposed solutions
 
+One solution to the problem often used by researchers is just removing the covariate with infinite MLE. However, while we do not assume that the true parameter is infinity, there tend strongly associated with the independent variable. Below I look into some solution put forward by the literature.
+
+## frequentist approaches
+
+### "exact"(-like) logistic regression
+
+As separation problems, implies that MLE goes to infinity, exact logistic regressions uses the conditional likelihood of the model. In the bivariate problem at hand, that means treating the intercept as a nuisance parameter [see @hosmer2013applied, p. 387 ff.] and condition it on the sufficient statistic of the observed value $n_1 = \sum_{i=1}^{n}y_i$. Resulting in the following conditional likelihood
+
+$$
+P(Y = y_1, ..., Y = y_n|n_1) = \frac{e^{\sum_{i=1}^n y_ix_i\beta_j}}{\sum_R (\sum_{i=1}^n e^{y_ix_i\beta_j})} \:; \: \text{where} \: R = {n\choose n_1} 
+$$
+For most instances, this problems is very computationally intense. We can approximate it using MCMC sampling so as to find the median.
+
+We will resort to one implementation of exact-like logistic regression in R using the erlm package [@zamar2007elrm]
+
+### Firth penalized likelihood
+
+While MLE estimates do not exist under separation, firth showed that by adding the log of the square root of the fisher information matrix to the log likelihood function
+
+$$
+l_f = l(\beta) + \frac{1}{2} log |I(\beta)|
+$$
+it becomes is strictly concave and so the penalized log-likelihood will converge on one unique maximum penalized likelihood estimate. R implementation using the **logistf** package [@heinze2013firth]
+
+## Bayesian approaches
+
+In a nutshell, bayesian approaches focus in general focus on estimating the probability distribution of the coefficient given the observed data. This is achieved via the bayes theorem
+
+$$
+\overbrace{Pr(\theta|D)}^\text{Posterior} = \frac{\overbrace{Pr(D|\theta)}^\text{Likelihood} \times\overbrace{Pr(\theta)}^\text{Prior}}{\underbrace{Pr(D)}_\text{Average Likelihood}}
+\\
+$$
+Bayesian methods combine the model of the data (likelihood) with *prior information* (a probability distribution for the coefficients). The prior distribution, which may be very informative or less so, can be used to constrain our likelihood estimates. The weight of the prior distribution depends in part on how informative it is as well as the sample size. For large samples the median density coefficient in the posterior distribution and the MLE are very similar. The choice of prior here becomes crucial. Researchers have studied how prior distributions of the coefficients may curb the separation issues. They have focused on which is the best weakly informed prior for separation issues - i.e. default options.
+
+### Weakly informative priors
+
+#### Gelman et al (2008)
+
+Gelman et al. [@gelman2008weakly] propose modeling the distribution of coefficients of a logistic regression using a weakly informative prior, they suggest standardizing continuous predictors to have a mean of 0 and a standard deviation of 0.5 and drawing the relevant coefficients from a $\beta \sim Cauchy(x_0 = 0, \gamma = 2.5)$
+
+#### Ghosh et al (2015)
+
+Ghosh et al [@ghosh2015use] provide evidence that 
+
+### 
+
+

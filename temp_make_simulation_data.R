@@ -39,7 +39,7 @@ logistic_sim <- function(n = 100, beta = 0.5, seed = 1234){
 }
 
 ### function for detecting separation
-sep_fun <- function(df, quasi_tresh = 0.90, kosmidis = FALSE) {
+sep_fun <- function(df, quasi_tresh = 0.90, kosmidis = TRUE) {
   
   ##################################################################################################################################################################
   # assess whether the logistic regression data contains separation issues
@@ -177,4 +177,4 @@ betas <- sample(seq(from = 2, to = 6, by = 0.001), 100)
 sample_size <- c(25, 50, 75)
 simulation_grid <- expand_grid(betas, sample_size)
 ### generate the populations N = 1.000.000 and draw pop/sample_size samples given the population parameter. Store the ones with perfect separation
-sample_list <- map2(simulation_grid$betas, simulation_grid$sample_size, ~make_simulation_datasets(beta = .x, sample_size  = .y, population_size = 10000000, seed = NULL, new_dataset = TRUE))
+sample_list <- map2(simulation_grid$betas, simulation_grid$sample_size, ~make_simulation_datasets(beta = .x, sample_size  = .y, population_size = 10000000, seed = NULL, new_dataset = FALSE))
