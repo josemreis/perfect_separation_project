@@ -1,7 +1,7 @@
-#### set up and helpers
-### ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#### 
+### set up and helpers ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ### packages
-packs <- c("devtools", "tidyverse", "furrr", "logistf", "rstanarm", "tidybayes")
+packs <- c("devtools", "tidyverse", "furrr", "logistf", "rstanarm", "tidybayes", "detectseparation")
 for (pack in packs) {
   
   if (pack %in% installed.packages()){
@@ -97,9 +97,7 @@ get_samples <- function(df, n = 1000, seed = 1234, all = FALSE) {
   return(sample_list)
 }
 
-#### data generation
-#### -------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+#### data generation -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ### function for generating logistic regression data
 logistic_sim <- function(n = 100, beta = 0.5, seed = 1234){
   
@@ -125,7 +123,7 @@ logistic_sim <- function(n = 100, beta = 0.5, seed = 1234){
 }
 
 ### function for detecting separation
-sep_fun <- function(df, quasi_tresh = 0.90, kosmidis = FALSE) {
+sep_fun <- function(df, quasi_tresh = 0.90, kosmidis = TRUE) {
   
   ##################################################################################################################################################################
   # assess whether the logistic regression data contains separation issues
@@ -157,8 +155,7 @@ sep_fun <- function(df, quasi_tresh = 0.90, kosmidis = FALSE) {
   
   return(out)  
 }
-
-## simulate the samples
+### simulate the population and sample
 generate_separation_data <- function(population_size = 10000, sample_size = 50, beta = 4, seed = NULL) {
   
   ####################################################################################################################
@@ -203,36 +200,60 @@ generate_separation_data <- function(population_size = 10000, sample_size = 50, 
   return(samples)
 }
 
-### run
-filename <- "data/separation_samples.csv.gz"
-if (!file.exists(filename)){
+### generate the data
+make_simulation_datasets <- function(beta = beta, sample_size  = 25, population_size = 1000000, seed = NULL, new_dataset = FALSE) {
   
-  ### generate the data
-  ## prepare the input grid: varying population parameters and sample sizes
-  set.seed(1234)
-  betas <- sample(seq(from = 0, to = 7, by = 0.1), 40)
-  sample_size <- c(25, 50, 75, 100)
-  simulation_grid <- expand_grid(betas, sample_size)
-  ### generate the populations and draw pop/sample_size samples
-  sample_list <- map2(simulation_grid$betas, simulation_grid$sample_size, ~generate_separation_data(beta = .x, sample_size  = .y))
-  ## turn to one df
-  all_samples <-  bind_rows(sample_list)
-  ## separate all data from samples with separation
-  sep_samples <- all_samples %>%
-    filter(separation == "1" | quasi_separation == "1")
-  ### export
-  if (!dir.exists("data")){
-    dir.create("data")
+  ####################################################################################################################
+  ### Generate the simulation data
+  # sample_size: int; size of the samples to draw from the population
+  # beta: numerical; true beta parameter value used to generate the population data, i.e. \pi for y ~ Binomial(1, \pi)
+  # seed: int; random seed can be user defined or, if NULL, generated randomly within the function
+  # population size: size of the population used to extract the sample_n/pop_n samples
+  # new_dataset: delete the dataset, existing, and make a new one
+  #####################################################################################################################
+  
+  ## filename
+  filename <- sprintf("data/separation_samples_%s_%s.csv.gz", beta, sample_size)
+  ## make a new dataset?
+  if (new_dataset) {
+    try(file.remove(filename))
+  } 
+  
+  if (!file.exists(filename)) {
+    
+    ### generate the populations and draw pop/sample_size samples
+    sample_list <- generate_separation_data(beta = beta, sample_size  = sample_size, population_size = 1000000)
+    ## turn to one df
+    all_samples <-  bind_rows(sample_list)
+    ## separate all data from samples with separation
+    sep_samples <- all_samples %>%
+      filter(separation == "1" | quasi_separation == "1")
+    ## check how manylength(unique(sep_samples$sample_id))/length(unique(all_samples$sample_id))
+    n_sep <- length(unique(sep_samples$sample_id))
+    n <- length(unique(all_samples$sample_id))
+    print(n_sep)
+    print(n_sep/n)
+    ## add as columns
+    sep_samples$prop_sep_sample <- n_sep/n
+    # clear up some space
+    rm(all_samples)
+    ### export
+    if (!dir.exists("data")){
+      dir.create("data")
+    }
+    
+    ## samples with separation issues
+    write_csv(sep_samples, gzfile(filename))
+    ## return the dataset
+    out <- sep_samples 
+    
+  } else {
+    
+    out <- read_csv(filename)
+    
   }
-  ## all samples
-  write_csv(all_samples, gzfile("data/all_samples.csv.gz"))
-  ## samples with separation issues
-  write_csv(sep_samples, gzfile("data/separation_samples.csv.gz"))
-  
 }
-
-#### models
-### ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#### models ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ### calculate the coverage probability
 coverage_probability <- function(ci_upper, ci_lower, true_beta){
   ## check if the true beta is contained in the relevant confidence interval
@@ -511,8 +532,18 @@ run_simulation <- function(bottom_up = FALSE, sep_treshold =  1000, random_sampl
   }
 }
 
-#### run
-## -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#### run -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+### generate the simulation data
+## prepare the input grid: varying population parameters and sample sizes
+if (!dir.exists("data")) {
+  set.seed(1234)
+  betas <- sample(seq(from = 2, to = 6, by = 0.001), 100)
+  sample_size <- c(25, 50, 75)
+  simulation_grid <- expand_grid(betas, sample_size)
+  ### generate the populations N = 1.000.000 and draw pop/sample_size samples given the population parameter. Store the ones with perfect separation
+  sample_list <- map2(simulation_grid$betas, simulation_grid$sample_size, ~make_simulation_datasets(beta = .x, sample_size  = .y, population_size = 10000000, seed = NULL, new_dataset = FALSE))
+}
+### fit the models
 ## select the order of model fitting conditional on the machine
 order <- if_else(path.expand('~') == "/home/jmr", TRUE, FALSE)
 ## run
