@@ -531,6 +531,28 @@ run_simulation <- function(bottom_up = FALSE, sep_treshold =  1000, random_sampl
   }
 }
 
+### make dataset
+make_results_dataset <- function(dataset_path = "results/simulation/simulation_results.csv") {
+  
+  if (!file.exists(dataset_path)) {
+   
+    ## list the output files
+    files <- list.files("results/simulation/output", full.names = TRUE)
+    ## read, combine and clean up
+    out <- map_df(files, read_csv) %>%
+      mutate(estimation_method = str_replace(estimation_method, "NA, ", ""))
+    ## export
+    write_csv(out, dataset_path)
+    
+  } else {
+    
+    out <- read_csv(dataset_path)
+    
+  }
+  
+  return(out)
+  
+}
 #### run -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ### generate the simulation data
 ## prepare the input grid: varying population parameters and sample sizes
@@ -547,3 +569,4 @@ if (!dir.exists("data")) {
 order <- if_else(path.expand('~') == "/home/jmr", TRUE, FALSE)
 ## run
 run_simulation(bottom_up = order, sep_treshold =  1000, random_samples = TRUE, n_samples = 1000, seed = 1234)
+data <- make_results_dataset()

@@ -1,0 +1,363 @@
+---
+title: "Separation and non-identification in logistic regression models: a simulation study"
+subtitle: "test"
+author:
+  name: José Reis
+affiliation:
+  address: "data and code at https://github.com/josemreis/separation_project"
+column_numbers: 3
+body_textsize: "18pt"
+output: 
+  posterdown::posterdown_html:
+    self_contained: false
+bibliography: ./skeleton.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, cache = TRUE, error = FALSE, fig.align="center", message = FALSE, fig.height = 8, fig.width = 14)
+### packages
+packs <- c("tidyverse", "kableExtra")
+for (pack in packs) {
+  
+  if (pack %in% installed.packages()){
+    
+    require(pack, character.only = TRUE)
+    
+  } else {
+    
+    install.packages(pack)
+    require(pack, character.only = TRUE)
+    
+  }
+}
+## turn off scientific notation
+options(scipen=999)
+## plot settings: default
+theme_set(theme_minimal(base_size = 18))
+```
+
+# Logistic regression
+
+Logistic regression is a generalized linear model for binary data. It models the conditional distribution of $Y$, a random vector composed of dichotomous observations $(y_1, ...y_n) \in \{0,1\}$, given $X$, a vector of co-variate variables $(x_i, ...,x_n)$, as a Bernoulli distribution, or $Binomial(1, \pi)$.
+
+$$
+y_i|x_i \sim \text{Binomial}(1, \pi_i) 
+$$
+Where $\pi_i$ is assumed to be a function of a linear component a linear component, $\alpha + \beta X_i$, which is modeled using a logit link function.
+
+
+$$
+g(\pi_i) = logit \: \pi_i = log \: \frac{\pi_i}{1 - \pi_i} = \alpha + \beta x \\
+\text{where} \\
+Pr(Y=1|X) = logit^{-1} \pi_i = \frac{e^{\alpha + \beta x}}{1 + e^{\alpha + \beta x}}
+$$
+
+To estimate $\beta_i$ researchers find the coefficient vector which maximizes log-likelihood function.
+
+
+
+$$
+l(\beta|x_1, ..., x_n) = \sum_{i=1}^n y_i \: log \: \pi_i + (1-y_i) \: log \: (1-\pi_i)
+$$
+
+
+In most cases, the MLE must be approximated using some numerical method (e.g. Newton-Raphson algorithm).
+
+
+# Separation
+
+**Complete separation** occurs in the sample if there is a vector of parameter values $\beta = (\beta_1, ..., \beta_n)$ which partitions the explanatory value at $T$ in such a way that in one side the dependent variable is always $y_i = 1$ and on the other it is always $y_i = 0$ (see @albert1984existence). That is, the linear component can completely discriminate $y$.
+
+$$
+\beta x_i > T \: \text{whenever} \: y_i = 1,\\
+\beta x_i < T \: \text{whenever} \: y_i = 0
+$$
+
+
+**Quasi complete separation** occurs whenever there is at least one vector of parameter values $\beta = (\beta_1, ..., \beta_n)$ which partitions the explanatory value at $T$ in such a way that the following equality holds for at least one $y_i$ (*idem*).
+
+$$
+\beta x_i \geq  T \: \text{whenever} \: y_i = 1 \\ 
+\beta x_i \leq  T \: \text{whenever} \: y_i = 0 
+$$
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.align="center"}
+### function for generating logistic regression data
+logistic_sim <- function(n = 100, beta = 0.5, seed = NULL){
+  
+  ####################################################################################################################
+  ### simulate population data for a logistic regression y|x ~ logit^{-1} \pi(x)
+  # model details:
+      # y|x ~ Binomial(1, \pi) \\
+      # \pi = logit^{-1} \pi = \frac{exp(\alpha + \beta X)}{1 + exp(\alpha + \beta X)} \\
+      # X ~ N(0,1) \\
+      # \alpha = 0
+  # n: int; size of the population data to simulate. 
+  # beta: numerical; true beta parameter value used to generate the population data, i.e. \pi for y ~ Binomial(1, \pi)
+  # seed: int; random seed user defined
+  #####################################################################################################################
+  
+    ### simulate population data
+  if (length(seed) == 0) {
+    
+    random_seed <- sample(.Random.seed, 1) 
+    
+  } else {
+    
+    random_seed <- seed
+    
+  }
+  set.seed(seed)
+  alpha <- 0 # centered data
+  df <- tibble(x = rnorm(n, 0, 1)) %>%
+    mutate(pi = plogis((alpha + beta * x)), 
+           y = rbinom(n, 1, prob = pi),
+           random_seed = random_seed)
+  
+  return(df)
+}
+
+
+make_separation_plot <- function(n = 100, beta = 0.5, seed = 1234) {
+  
+  df <- logistic_sim(n = n, beta = beta, seed = seed)
+  
+  p <- df %>%
+    ggplot(aes(x = x, y = y)) + 
+    geom_point(size = 4) +
+    annotate("rect", xmin = -Inf, xmax = mean(df$x), ymin = -Inf, ymax = .5, fill = "palegreen", alpha = 0.5) +
+    annotate("rect", xmin = mean(df$x), xmax = Inf, ymin = -Inf, ymax = .5, fill = "#F8766D", alpha = 0.5)  +
+    annotate("rect", xmin = -Inf, xmax = mean(df$x), ymin = Inf, ymax = .5, fill = "#F8766D", alpha = 0.5) +
+    annotate("rect", xmin = mean(df$x), xmax = Inf, ymin = Inf, ymax = .5, fill = "palegreen", alpha = 0.5) +
+    stat_smooth(method = "glm", 
+                method.args = list(family = "binomial"),
+                se = FALSE) +
+    labs(y = bquote(logit^-1 ~pi[(x)]))
+  
+  return(p) 
+}
+
+p1 <- make_separation_plot(n = 25, beta = 5, seed = 1234)
+p2 <-  make_separation_plot(n = 25, beta = 3, seed = 1234)
+cowplot::plot_grid(plotlist = list(p1, p2))
+```
+
+**The problem**
+
+* MLE goes to infinity
+* Nevertheless, most statistical software will *converge* before reaching the MLE and report biased log odds ratios and SEs [@mansournia2018separation]
+* p-values and Wald confidence intervals cannot be relied on hypothesis testing
+
+
+```{r}
+plot_compare_likelihoods_n <- function (beta, n, up_to = 20, seed){
+  
+  ## Define the negative log likelihood function
+  logl <- function(beta,x,y){
+    y <- y
+    x <- as.matrix(x)
+    loglik <- sum(-y*log(1 + exp(-(x%*%beta))) - (1-y)*log(1 + exp(x%*%beta)))
+    ## turn to df
+    out <- tibble(loglikelihood = loglik,
+             x = x,
+             beta = beta,
+             y = y) %>%
+      mutate(overlap = if_else((x * beta > 0 & y == 1) | (x * beta < 0 & y == 0), 1, 0))
+    return(out)
+  }
+  
+  plot_list <- list()
+  for (i in 1:length(n)) {
+    b <- beta
+    s <- n[i]
+    set.seed(seed)
+    ## generate the data given the beta
+    d <- logistic_sim(beta = b, n = s, seed = seed)
+    ## copute the log likelihood and make the plit
+    df <-  map_df(seq(from = 0.5, to = b + up_to, by = 0.1), ~ logl(x = d$x, y = d$y, beta = .x)) 
+    p <- df %>%
+      ggplot(aes(beta, loglikelihood)) + 
+      geom_line() + 
+      geom_vline(xintercept = b, color = "red", linetype = "dashed") +
+      scale_x_continuous(breaks = seq(from = 0, to = up_to, by = 5)) + 
+      labs(y = "neg. log likelihood",subtitle = paste0(" proportion separated = ", sum(df$overlap)/nrow(df)))
+    
+    plot_list[[i]] <- p
+    
+  }
+  
+  return(plot_list)
+  
+}
+cowplot::plot_grid(plotlist = plot_compare_likelihoods_n(beta = 5, n = c(25, 1000), seed = 123))
+
+```
+
+# Proposed solutions
+
+## Penalized maximum likelihood 
+
+While MLE estimates do not exist under separation, Firth [-@firth1993bias] showed that by adding the log of the square root of the fisher information matrix as a penalty to the log likelihood function
+
+$$
+l_f = l(\beta) + \frac{1}{2} log |I(\beta)|
+$$
+
+it becomes is strictly concave and so the penalized log-likelihood will converge on one unique maximum penalized likelihood estimate. 
+
+## Bayesian approaches
+
+In a nutshell, Bayesian approaches focus in general focus on estimating the probability distribution of the coefficient given the observed data. This is estimated via the bayes theorem
+
+$$
+\overbrace{Pr(\theta|D)}^\text{Posterior} = \frac{\overbrace{Pr(D|\theta)}^\text{Likelihood} \times\overbrace{Pr(\theta)}^\text{Prior}}{\underbrace{Pr(D)}_\text{Average Likelihood}}
+\\
+$$
+Bayesian methods combine the model of the data (likelihood) with *prior information*. The prior distribution can be used to constrain our likelihood estimates. Researchers have studied how prior distributions of the coefficients may curb the separation issues. They have focused on which is the best weakly informed prior for separation issues - i.e. default options.
+
+* Some literature discusses using $Cauchy(x_0 = 0, \gamma = 2.5)$ distribution [@gelman2008weakly] as default
+* Others argue for a $t(df = 10)$ distribution [@ghosh2015use]
+* Alternatively, a normal distribution centered around 0 and with an [informed](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) choice of standard deviation [@rainey2016dealing]
+
+```{r}
+ggplot(data.frame(x = c(-5, 5)), aes(x)) +
+  stat_function(fun = dcauchy, n = 1e3, args = list(location = 0, scale = 2.5), aes(color = "a"), size = 2) +
+  stat_function(fun = dt, n = 1e3, args = list(df = 10), aes(color = "b"), size = 2) +
+  stat_function(fun = dnorm, n = 1e3, args = list(mean = 0, sd = 2.5), aes(color = "c"), size = 2) +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_color_discrete(name = "",
+                       labels = c("a" = bquote(beta ~ "~ Cauchy(0, 2.5)"),
+                                  "b" = bquote(beta ~ "~ t(10)"),
+                                  "c" = bquote(beta ~ "~ Normal(0, 2.5)"))) +
+  labs(y = "P(x)",
+       subtitle = "Priors discussed in the literature") 
+```
+
+# Simulation
+
+The robustness of the following methods was put to test in a simulation set up.
+
+
+```{r}
+tab <- data.frame(
+  "Method" = c(
+    "Maximum Likelihood Logistic Regression",
+    "Penalized Maximum Likelihood Logistic Regression",
+    "Bayesian Logistic Regression with $\\beta \\sim Cauchy(0, 2,5) \\: \\alpha \\sim t(0, 0, 10)$",
+    "Bayesian Logistic Regression with $\\beta \\sim t(10,0,0) \\: \\alpha \\sim t(0, 0, 10)$",
+    "Bayesian Logistic Regression with $\\beta \\sim Normal(0, 2.5) \\: \\alpha \\sim t(0, 0, 10)$"),
+  "Point Estimate" = c(
+    "MLE",
+    "PMLE",
+    "MAP",
+    "MAP",
+    "MAP"
+  ),
+  "CI" = c(
+    "Not applicable",
+    "Profile Likelihood",
+    "Highest Density Probability Interval",
+    "Highest Density Probability Interval",
+    "Highest Density Probability Interval"
+  ),
+  "Software" = c(
+    "stats::glm() (R 4.0.3)",
+    "logistif::logistf() (R 4.0.3)",
+    "rstanarm::stan_glm() (R 4.0.3)",
+    "rstanarm::stan_glm() (R 4.0.3)",
+    "rstanarm::stan_glm() (R 4.0.3)"
+  ))
+
+tab %>%
+  kbl(caption = "Methods Evaluated") %>%
+  kable_paper(full_width = F, html_font = "Cambria", font_size = 16)
+
+```
+
+
+Each procedure was evaluated based on:
+
+1. **Bias**, $Bias = E[\hat{\beta}] - \beta$
+2. **Mean-squared error**, $MSE = E[Bias(\hat{\beta})^2]$
+3. **Coverage probability of the confidence intervals**, *i.e.* proportion of CIs containing the true parameter
+
+
+
+## Data generating process
+
+1. Randomly sample 100 parameters between 2 and 6, $\beta_{sim}$
+2. Simulate a population with 1.000.000 observations using the following data generating process
+
+$$
+y|x \sim Binomial(1, \pi) \\
+\pi = logit^{-1} \pi = \frac{exp(\alpha + \beta_{sim} X)}{1 + exp(\alpha + \beta_{sim} X)} \\
+X \sim N(0,1) \\
+\alpha = 0 
+$$
+
+3.  From each population draw $\frac{1.000.000}{n_{sample}}$ samples, where $n_{sample} = \{25, 50, 75\}$. For each sample check whether perfect separation or quasi-perfect separation occurred (used [the following package for it](https://cran.r-project.org/web/packages/detectseparation/))
+4. Keep only samples with separation
+5. Keep only populations which contain at least 1000 samples with separation
+6. Use a random sample of 1000
+
+We ended up with 1000 samples from 275 simulated populations each with a different parameter.
+
+## Results
+
+```{r include=FALSE}
+## source the simulation. If the results are already stored, it just loads the data. Simulation takes more than a day.
+file <- "../results/simulation/simulation_results.csv"
+if (!file.exists(file)){
+ 
+  source("../simulation.R")
+   
+} else {
+  
+  data <- read_csv(file)
+  
+}
+```
+
+
+```{r}
+data %>% 
+  mutate(estimation_method = if_else(estimation_method == "Bayesian logit model, beta ~ t(1, 0, 2.5)", "Bayesian logit model, beta ~ Cauchy(0, 2.5)", estimation_method)) %>% ## the same but more straightforward
+  group_by(estimation_method) %>%
+  summarise(`Bias averaged over the 275 populations (#samples = 1000)` = mean(bias),
+            `MSE averaged over the 275 populations (#samples = 1000)` = mean(mse),
+            `Coverage probability averaged over the 275 populations (#samples = 1000)` = mean(coverage_probability)) %>%
+  rename(`estimation method` = estimation_method) %>%
+  arrange(abs(`Bias averaged over the 275 populations (#samples = 1000)`)) %>%
+  kbl(caption = "findings") %>%
+  kable_paper(full_width = F, html_font = "Cambria", font_size = 20)
+
+```
+
+
+```{r, fig.cap="Expected value of beta and its variance"}
+data %>%
+  ggplot(aes(true_beta, ev_beta, color = estimation_method)) + 
+  geom_point() + 
+  geom_errorbar(aes(ymax = ev_beta + mcse, ymin = ev_beta - mcse), position = "dodge") + 
+  facet_wrap(~estimation_method, scales = "free") +
+  labs(caption = "Error bars are computed using the monte carlo standard error of the 1000 simulations for each 275 beta value.",
+       color = "estimation method",
+       y = "Expected value of the estimated betas",
+       x = "True beta")
+```
+
+
+```{r, fig.cap="Distribution of bias"}
+data %>% 
+  mutate(estimation_method = if_else(estimation_method == "Bayesian logit model, beta ~ t(1, 0, 2.5)", "Bayesian logit model, beta ~ Cauchy(0, 2.5)", estimation_method)) %>%
+  mutate(is_mle = if_else(estimation_method == "Maximum Likelihood Estimation", "MLE", "Other")) %>%
+  ggplot(aes(bias, fill = estimation_method, color = estimation_method)) + 
+  geom_density(alpha = .6) + 
+  facet_wrap(~is_mle, scales = "free")
+
+```
+
+
+# References

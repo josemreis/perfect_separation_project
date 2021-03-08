@@ -1,0 +1,2 @@
+sample_size,n_trials,pop_id,estimation_method,point_estimate,ci_method,ci_alpha,coverage_probability,true_beta,ev_beta,median_beta,bias,percent_bias,empirical_variance_beta,empirical_sd_beta,mse,mcse
+25,1000,1904431972_4.773,"Bayesian logit model, beta ~ t(1, 0, 2.5)",MAP,highest density posterior interval,0.95,0.784,4.773,26.034674525444867,25.171685378379046,21.261674525444867,445.4572496426748,51.023156145263115,7.143049499006928,503.030936615069,0.2258830585618654

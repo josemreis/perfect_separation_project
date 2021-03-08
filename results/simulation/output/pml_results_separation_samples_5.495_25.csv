@@ -1,0 +1,2 @@
+sample_size,n_trials,pop_id,estimation_method,point_estimate,ci_method,ci_alpha,coverage_probability,true_beta,ev_beta,median_beta,bias,percent_bias,empirical_variance_beta,empirical_sd_beta,mse,mcse
+25,1000,1128366379_5.495,Penalized Maximum Likelihood Estimation,PMLE,profile,0.95,1,5.495,7.004168846511189,6.53008631408305,1.509168846511189,27.464401210394705,5.438341575108836,2.3320252089351086,7.710493840813641,0.07374511221164991

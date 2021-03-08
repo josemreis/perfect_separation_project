@@ -1,0 +1,2 @@
+sample_size,n_trials,pop_id,estimation_method,point_estimate,ci_method,ci_alpha,coverage_probability,true_beta,ev_beta,median_beta,bias,percent_bias,empirical_variance_beta,empirical_sd_beta,mse,mcse
+25,1000,512478579_4.373,Maximum Likelihood Estimation,MLE,wald,0.95,NA,4.373,236.1163798196465,171.2481766489006,231.74337981964652,5299.414128050457,75890.25958592024,275.4818679803087,129519.36341656727,8.711501568955851

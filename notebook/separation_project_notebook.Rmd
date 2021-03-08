@@ -157,6 +157,41 @@ Such a large coefficient is expected to generate some samples with perfect separ
 
 
 ```{r}
+### function for generating logistic regression data
+logistic_sim <- function(n = 100, beta = 0.5, seed = NULL){
+  
+  ####################################################################################################################
+  ### simulate population data for a logistic regression y|x ~ logit^{-1} \pi(x)
+  # model details:
+      # y|x ~ Binomial(1, \pi) \\
+      # \pi = logit^{-1} \pi = \frac{exp(\alpha + \beta X)}{1 + exp(\alpha + \beta X)} \\
+      # X ~ N(0,1) \\
+      # \alpha = 0
+  # n: int; size of the population data to simulate. 
+  # beta: numerical; true beta parameter value used to generate the population data, i.e. \pi for y ~ Binomial(1, \pi)
+  # seed: int; random seed user defined
+  #####################################################################################################################
+  
+    ### simulate population data
+  if (length(seed) == 0) {
+    
+    random_seed <- sample(.Random.seed, 1) 
+    
+  } else {
+    
+    random_seed <- seed
+    
+  }
+  alpha <- 0 # centered data
+  df <- tibble(x = rnorm(n, 0, 1)) %>%
+    mutate(pi = plogis((alpha + beta * x)), 
+           y = rbinom(n, 1, prob = pi),
+           random_seed = random_seed)
+  
+  return(df)
+}
+
+
 make_separation_plot <- function(n = 100, beta = 0.5, seed = 1234) {
   
   df <- logistic_sim(n = n, beta = beta, seed = seed)
@@ -177,8 +212,9 @@ make_separation_plot <- function(n = 100, beta = 0.5, seed = 1234) {
   return(p) 
 }
 
-p <- make_separation_plot(n = 25, beta = 5, seed = 123)
-p
+p1 <- make_separation_plot(n = 25, beta = 5, seed = 1234)
+p2 <- make_separation_plot(n = 25, beta = 3, seed = 1234)
+cowplot::plot_grid(plotlist = list(p1,p2))
 ```
 
 
@@ -250,7 +286,7 @@ Which we can log and simplify so as to obtain the log-likelihood function.
 
 
 $$
-l(\beta|x1, ..., x_n)  = log \: L(\beta|x1, ..., x_n ) \\
+l(\beta|x1, ..., x_n)  = log \: L(\beta|x_1, ..., x_n ) \\
 = \sum_{i=1}^n y_i \: log \: \pi_i + (1-y_i) \: log \: (1-\pi_i) \\
 = \sum_{i=1}^n y_i \: log (\frac{e^{\beta x_i}}{1 + e^{\beta x_i}}) + (1-y_i) \: log(\frac{1}{1 + e^{ \beta x_i}}) \\
 = \sum_{i=1}^n y_i(1 + \beta x_i) - log(1 + e^{\beta x_i})  
