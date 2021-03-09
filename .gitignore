@@ -5,3 +5,4 @@
 **/*.html
 **/*.log
 **/*.zip
+.Rproj.user

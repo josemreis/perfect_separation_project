@@ -6,7 +6,7 @@ author:
 affiliation:
   address: "data and code at https://github.com/josemreis/separation_project"
 column_numbers: 4
-body_textsize: "23pt"
+body_textsize: "22pt"
 output: 
   posterdown::posterdown_html:
     self_contained: false
@@ -43,7 +43,7 @@ Logistic regression is a generalized linear model for binary data. It models the
 $$
 y_i|x_i \sim \text{Binomial}(1, \pi_i) 
 $$
-Where $\pi_i$ is assumed to be a function of a linear component a linear component, $\alpha + \beta X_i$, which is modeled using a logit link function.
+Where $\pi_i$ is assumed to be a function of a linear component, $\alpha + \beta X_i$, which is modeled using a logit link function.
 
 
 $$
@@ -216,7 +216,7 @@ it becomes is strictly concave and so the penalized log-likelihood will converge
 ## Bayesian approaches
 
 
-In a nutshell, Bayesian approaches focus in general focus on estimating the probability distribution of the coefficient given the observed data. This is estimated via the Bayes theorem
+In a nutshell, Bayesian approaches focus on estimating the probability distribution of the coefficient given the observed data. This is estimated via the Bayes theorem
 
 
 $$
@@ -225,7 +225,7 @@ $$
 $$
 Bayesian methods combine the model of the data (likelihood) with *prior information* about $\beta$. The prior distribution can be used to constrain our likelihood estimates. Researchers have studied how prior distributions of the coefficients may curb separation issues. They have focused on which is the best weakly informed prior for separation issues - i.e. default options.
 
-* Some literature discusses using $Cauchy(x_0 = 0, \gamma = 2.5)$ distribution [@gelman2008weakly] as default
+* Some literature discusses using a $Cauchy(x_0 = 0, \gamma = 2.5)$ distribution [@gelman2008weakly] as default
 * Others argue for a $t(df = 7)$ distribution [@ghosh2015use]
 * Alternatively, a normal distribution centered around 0 and with an [informed](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) choice of standard deviation [@rainey2016dealing]
 
@@ -246,7 +246,7 @@ ggplot(data.frame(x = c(-10, 10)), aes(x)) +
 
 # Simulation
 
-The robustness of the following methods was put to test in a simulation set up.
+The robustness of the following methods was put to test in a simulation study.
 
 
 ```{r}
@@ -306,12 +306,12 @@ X \sim N(0,1) \\
 \alpha = 0 
 $$
 
-3.  From each population draw $\frac{1.000.000}{n_{sample}}$ samples, where $n_{sample} = \{25, 50, 75\}$. For each sample check whether perfect separation or quasi-perfect separation occurred [@detect]
-4. Keep only samples with separation issues
-5. Keep only populations which contain at least 1000 samples with separation
-6. Use a random sample of 1000
+3.  From each population draw $\frac{1.000.000}{n_{sample}}$ samples of size $n_{sample} = \{25, 50, 75\}$ and check whether perfect separation or quasi-perfect separation occurred [@detect]
+4. Keep only samples which contain separation issues. Keep only populations which contain at least 1000 samples with separation issues
+5. For each population, and given their true $\beta$, randomly sample 1000 samples to study the estimation procedures
 
-We ended up with 55 simulated populations each with a different parameter and 1000 simulated samples (N = 55000) which we used to study the properties of the estimation methods.
+We ended up with 55 simulated populations each with 1000 simulated samples (N = 55000). Only samples of size 25 matched the requirements mentioned above. 
+
 
 ## Results
 
