@@ -1,7 +1,7 @@
-*.Rproj.user
-*.Rhistory
-*.RData
-*.Ruserdata
-*.html
-*.log
-*.zip
+**/*.Rproj.user
+**/*.Rhistory
+**/*.RData
+**/*.Ruserdata
+**/*.html
+**/*.log
+**/*.zip

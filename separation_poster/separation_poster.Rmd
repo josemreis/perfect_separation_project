@@ -10,7 +10,7 @@ body_textsize: "22pt"
 output: 
   posterdown::posterdown_html:
     self_contained: false
-bibliography: ./skeleton.bib
+bibliography: skeleton.bib
 ---
 
 ```{r setup, include=FALSE}
