@@ -6,7 +6,7 @@ author:
 affiliation:
   address: "data and code at https://github.com/josemreis/separation_project"
 column_numbers: 4
-body_textsize: "22pt"
+body_textsize: "23pt"
 output: 
   posterdown::posterdown_html:
     self_contained: false
