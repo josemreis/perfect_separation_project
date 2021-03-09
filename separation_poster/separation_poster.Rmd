@@ -311,7 +311,7 @@ $$
 5. Keep only populations which contain at least 1000 samples with separation
 6. Use a random sample of 1000
 
-We ended up with 1000 samples from 55 simulated populations each with a different parameter.
+We ended up with 55 simulated populations each with a different parameter and 1000 simulated samples (N = 55000) which we used to study the properties of the estimation methods.
 
 ## Results
 
@@ -341,6 +341,7 @@ data %>%
             `MSE averaged over the 55 populations (#samples = 1000)` = mean(mse),
             `Coverage probability averaged over the 55 populations (#samples = 1000)` = mean(coverage_probability)) %>%
   rename(`estimation method` = estimation_method) %>%
+  mutate_if(is.numeric, round, 4) %>%
   arrange(abs(`Bias averaged over the 55 populations (#samples = 1000)`)) %>%
   kbl(caption = "findings") %>%
   kable_classic_2(full_width = F, html_font = "Cambria", font_size = 20)
