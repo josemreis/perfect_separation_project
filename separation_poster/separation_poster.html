@@ -325,8 +325,8 @@ l(\beta|x_1, ..., x_n) = \sum_{i=1}^n y_i \: log \: \pi_i + (1-y_i) \: log \: (1
 \beta x_i \geq  T \: \text{whenever} \: y_i = 1 \\ 
 \beta x_i \leq  T \: \text{whenever} \: y_i = 0 
 \]</span></p>
-<div class="figure" style="text-align: center"><span id="fig:unnamed-chunk-1"></span>
-<img src="separation_poster_files/figure-html/unnamed-chunk-1-1.png" alt="Perfect and quasi-perfect separation" width="960" />
+<div class="figure" style="text-align: center"><span id="fig:unnamed-chunk-31"></span>
+<img src="separation_poster_files/figure-html/unnamed-chunk-31-1.png" alt="Perfect and quasi-perfect separation" width="960" />
 <p class="caption">
 Figure 1: Perfect and quasi-perfect separation
 </p>
@@ -338,8 +338,8 @@ Figure 1: Perfect and quasi-perfect separation
 <li>Nevertheless, most statistical software will <em>converge</em> before reaching the MLE and report biased log odds ratios and SEs</li>
 <li>p-values and Wald confidence intervals cannot be relied on for hypothesis testing</li>
 </ul>
-<div class="figure" style="text-align: center"><span id="fig:unnamed-chunk-2"></span>
-<img src="separation_poster_files/figure-html/unnamed-chunk-2-1.png" alt="Negative log-likelihoods" width="960" />
+<div class="figure" style="text-align: center"><span id="fig:unnamed-chunk-32"></span>
+<img src="separation_poster_files/figure-html/unnamed-chunk-32-1.png" alt="Negative log-likelihoods" width="960" />
 <p class="caption">
 Figure 2: Negative log-likelihoods
 </p>
@@ -369,8 +369,8 @@ Bayesian methods combine the model of the data (likelihood) with <em>prior infor
 <li>Others argue for a <span class="math inline">\(t(df = 7)\)</span> distribution <span class="citation">(Ghosh, Li, and Mitra 2015)</span></li>
 <li>Alternatively, a normal distribution centered around 0 and with an <a href="https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations">informed</a> choice of standard deviation <span class="citation">(Rainey 2016)</span></li>
 </ul>
-<div class="figure" style="text-align: center"><span id="fig:unnamed-chunk-3"></span>
-<img src="separation_poster_files/figure-html/unnamed-chunk-3-1.png" alt="Priors discussed in the literature" width="960" />
+<div class="figure" style="text-align: center"><span id="fig:unnamed-chunk-33"></span>
+<img src="separation_poster_files/figure-html/unnamed-chunk-33-1.png" alt="Priors discussed in the literature" width="960" />
 <p class="caption">
 Figure 3: Priors discussed in the literature
 </p>
@@ -382,7 +382,7 @@ Figure 3: Priors discussed in the literature
 <p>The robustness of the following methods was put to test in a simulation set up.</p>
 <table class=" lightable-classic-2" style="font-size: 20px; font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
 <caption style="font-size: initial !important;">
-<span id="tab:unnamed-chunk-4">Table 1: </span>Methods Evaluated
+<span id="tab:unnamed-chunk-34">Table 1: </span>Methods Evaluated
 </caption>
 <thead>
 <tr>
@@ -493,7 +493,7 @@ X \sim N(0,1) \\
 \]</span></p>
 <ol start="3" style="list-style-type: decimal">
 <li>From each population draw <span class="math inline">\(\frac{1.000.000}{n_{sample}}\)</span> samples, where <span class="math inline">\(n_{sample} = \{25, 50, 75\}\)</span>. For each sample check whether perfect separation or quasi-perfect separation occurred <span class="citation">(Kosmidis and Schumacher 2020)</span></li>
-<li>Keep only samples with separation</li>
+<li>Keep only samples with separation issues</li>
 <li>Keep only populations which contain at least 1000 samples with separation</li>
 <li>Use a random sample of 1000</li>
 </ol>
@@ -503,7 +503,7 @@ X \sim N(0,1) \\
 <h2>Results</h2>
 <table class=" lightable-classic-2" style="font-size: 20px; font-family: Cambria; width: auto !important; margin-left: auto; margin-right: auto;">
 <caption style="font-size: initial !important;">
-<span id="tab:unnamed-chunk-6">Table 2: </span>findings
+<span id="tab:unnamed-chunk-36">Table 2: </span>findings
 </caption>
 <thead>
 <tr>
@@ -594,8 +594,8 @@ NA
 </tr>
 </tbody>
 </table>
-<div class="figure" style="text-align: center"><span id="fig:unnamed-chunk-7"></span>
-<img src="separation_poster_files/figure-html/unnamed-chunk-7-1.png" alt="Expected value of beta and simulation standard error" width="960" />
+<div class="figure" style="text-align: center"><span id="fig:unnamed-chunk-37"></span>
+<img src="separation_poster_files/figure-html/unnamed-chunk-37-1.png" alt="Expected value of beta and simulation standard error" width="960" />
 <p class="caption">
 Figure 4: Expected value of beta and simulation standard error
 </p>
