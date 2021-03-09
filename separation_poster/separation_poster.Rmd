@@ -5,8 +5,8 @@ author:
   name: José Reis
 affiliation:
   address: "data and code at https://github.com/josemreis/separation_project"
-column_numbers: 3
-body_textsize: "18pt"
+column_numbers: 4
+body_textsize: "22pt"
 output: 
   posterdown::posterdown_html:
     self_contained: false
@@ -14,7 +14,7 @@ bibliography: ./skeleton.bib
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, cache = TRUE, error = FALSE, fig.align="center", message = FALSE, fig.height = 8, fig.width = 14)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, cache = TRUE, error = FALSE, fig.align="center", message = FALSE, fig.height = 8, fig.width = 10)
 ### packages
 packs <- c("tidyverse", "kableExtra")
 for (pack in packs) {
@@ -33,12 +33,12 @@ for (pack in packs) {
 ## turn off scientific notation
 options(scipen=999)
 ## plot settings: default
-theme_set(theme_minimal(base_size = 18))
+theme_set(theme_minimal(base_size = 16))
 ```
 
 # Logistic regression
 
-Logistic regression is a generalized linear model for binary data. It models the conditional distribution of $Y$, a random vector composed of dichotomous observations $(y_1, ...y_n) \in \{0,1\}$, given $X$, a vector of co-variate variables $(x_i, ...,x_n)$, as a Bernoulli distribution, or $Binomial(1, \pi)$.
+Logistic regression is a generalized linear model for binary data. It models the conditional distribution of $Y$, a random vector composed of dichotomous observations $(y_1, ...,y_n) \in \{0,1\}$, given $X$, a vector of co-variate variables $(x_i, ...,x_n)$, as a Bernoulli distribution, or $Binomial(1, \pi)$.
 
 $$
 y_i|x_i \sim \text{Binomial}(1, \pi_i) 
@@ -66,7 +66,7 @@ In most cases, the MLE must be approximated using some numerical method (e.g. Ne
 
 # Separation
 
-**Complete separation** occurs in the sample if there is a vector of parameter values $\beta = (\beta_1, ..., \beta_n)$ which partitions the explanatory value at $T$ in such a way that in one side the dependent variable is always $y_i = 1$ and on the other it is always $y_i = 0$ (see @albert1984existence). That is, the linear component can completely discriminate $y$.
+**Complete separation** occurs if there is a vector of parameter values $\beta = (\beta_1, ..., \beta_n)$ which partitions the explanatory value at $T$ in such a way that in one side the dependent variable is always $y_i = 1$ and on the other it is always $y_i = 0$ (see @albert1984existence). That is, the linear component can completely discriminate $y$.
 
 $$
 \beta x_i > T \: \text{whenever} \: y_i = 1,\\
@@ -83,7 +83,9 @@ $$
 
 
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, fig.align="center"}
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.align="center", fig.cap="Perfect and quasi-perfect separation"}
 ### function for generating logistic regression data
 logistic_sim <- function(n = 100, beta = 0.5, seed = NULL){
   
@@ -139,19 +141,21 @@ make_separation_plot <- function(n = 100, beta = 0.5, seed = 1234) {
   return(p) 
 }
 
-p1 <- make_separation_plot(n = 25, beta = 5, seed = 1234)
-p2 <-  make_separation_plot(n = 25, beta = 3, seed = 1234)
+p1 <- make_separation_plot(n = 25, beta = 5, seed = 123)
+p2 <-  make_separation_plot(n = 25, beta = 3, seed = 123)
 cowplot::plot_grid(plotlist = list(p1, p2))
 ```
 
-**The problem**
+
+
+## The problem
 
 * MLE goes to infinity
-* Nevertheless, most statistical software will *converge* before reaching the MLE and report biased log odds ratios and SEs [@mansournia2018separation]
-* p-values and Wald confidence intervals cannot be relied on hypothesis testing
+* Nevertheless, most statistical software will *converge* before reaching the MLE and report biased log odds ratios and SEs 
+* p-values and Wald confidence intervals cannot be relied on for hypothesis testing
 
 
-```{r}
+```{r, fig.cap="Negative log-likelihoods"}
 plot_compare_likelihoods_n <- function (beta, n, up_to = 20, seed){
   
   ## Define the negative log likelihood function
@@ -175,7 +179,7 @@ plot_compare_likelihoods_n <- function (beta, n, up_to = 20, seed){
     set.seed(seed)
     ## generate the data given the beta
     d <- logistic_sim(beta = b, n = s, seed = seed)
-    ## copute the log likelihood and make the plit
+    ## compute the log likelihood and make the plit
     df <-  map_df(seq(from = 0.5, to = b + up_to, by = 0.1), ~ logl(x = d$x, y = d$y, beta = .x)) 
     p <- df %>%
       ggplot(aes(beta, loglikelihood)) + 
@@ -195,6 +199,7 @@ cowplot::plot_grid(plotlist = plot_compare_likelihoods_n(beta = 5, n = c(25, 100
 
 ```
 
+
 # Proposed solutions
 
 ## Penalized maximum likelihood 
@@ -207,33 +212,37 @@ $$
 
 it becomes is strictly concave and so the penalized log-likelihood will converge on one unique maximum penalized likelihood estimate. 
 
+
 ## Bayesian approaches
 
-In a nutshell, Bayesian approaches focus in general focus on estimating the probability distribution of the coefficient given the observed data. This is estimated via the bayes theorem
+
+In a nutshell, Bayesian approaches focus in general focus on estimating the probability distribution of the coefficient given the observed data. This is estimated via the Bayes theorem
+
 
 $$
 \overbrace{Pr(\theta|D)}^\text{Posterior} = \frac{\overbrace{Pr(D|\theta)}^\text{Likelihood} \times\overbrace{Pr(\theta)}^\text{Prior}}{\underbrace{Pr(D)}_\text{Average Likelihood}}
 \\
 $$
-Bayesian methods combine the model of the data (likelihood) with *prior information*. The prior distribution can be used to constrain our likelihood estimates. Researchers have studied how prior distributions of the coefficients may curb the separation issues. They have focused on which is the best weakly informed prior for separation issues - i.e. default options.
+Bayesian methods combine the model of the data (likelihood) with *prior information* about $\beta$. The prior distribution can be used to constrain our likelihood estimates. Researchers have studied how prior distributions of the coefficients may curb separation issues. They have focused on which is the best weakly informed prior for separation issues - i.e. default options.
 
 * Some literature discusses using $Cauchy(x_0 = 0, \gamma = 2.5)$ distribution [@gelman2008weakly] as default
-* Others argue for a $t(df = 10)$ distribution [@ghosh2015use]
+* Others argue for a $t(df = 7)$ distribution [@ghosh2015use]
 * Alternatively, a normal distribution centered around 0 and with an [informed](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) choice of standard deviation [@rainey2016dealing]
 
-```{r}
-ggplot(data.frame(x = c(-5, 5)), aes(x)) +
+
+```{r fig.cap="Priors discussed in the literature"}
+ggplot(data.frame(x = c(-10, 10)), aes(x)) +
   stat_function(fun = dcauchy, n = 1e3, args = list(location = 0, scale = 2.5), aes(color = "a"), size = 2) +
-  stat_function(fun = dt, n = 1e3, args = list(df = 10), aes(color = "b"), size = 2) +
+  stat_function(fun = dt, n = 1e3, args = list(df = 7), aes(color = "b"), size = 2) +
   stat_function(fun = dnorm, n = 1e3, args = list(mean = 0, sd = 2.5), aes(color = "c"), size = 2) +
   scale_x_continuous(expand = c(0, 0)) +
   scale_color_discrete(name = "",
                        labels = c("a" = bquote(beta ~ "~ Cauchy(0, 2.5)"),
-                                  "b" = bquote(beta ~ "~ t(10)"),
+                                  "b" = bquote(beta ~ "~ t(7)"),
                                   "c" = bquote(beta ~ "~ Normal(0, 2.5)"))) +
-  labs(y = "P(x)",
-       subtitle = "Priors discussed in the literature") 
+  labs(y = "P(x)") 
 ```
+
 
 # Simulation
 
@@ -272,7 +281,7 @@ tab <- data.frame(
 
 tab %>%
   kbl(caption = "Methods Evaluated") %>%
-  kable_paper(full_width = F, html_font = "Cambria", font_size = 16)
+  kable_classic_2(full_width = F, html_font = "Cambria", font_size = 20)
 
 ```
 
@@ -297,21 +306,23 @@ X \sim N(0,1) \\
 \alpha = 0 
 $$
 
-3.  From each population draw $\frac{1.000.000}{n_{sample}}$ samples, where $n_{sample} = \{25, 50, 75\}$. For each sample check whether perfect separation or quasi-perfect separation occurred (used [the following package for it](https://cran.r-project.org/web/packages/detectseparation/))
+3.  From each population draw $\frac{1.000.000}{n_{sample}}$ samples, where $n_{sample} = \{25, 50, 75\}$. For each sample check whether perfect separation or quasi-perfect separation occurred [@detect]
 4. Keep only samples with separation
 5. Keep only populations which contain at least 1000 samples with separation
 6. Use a random sample of 1000
 
-We ended up with 1000 samples from 275 simulated populations each with a different parameter.
+We ended up with 1000 samples from 55 simulated populations each with a different parameter.
 
 ## Results
 
 ```{r include=FALSE}
 ## source the simulation. If the results are already stored, it just loads the data. Simulation takes more than a day.
+cur_dir <- getwd()
 file <- "../results/simulation/simulation_results.csv"
 if (!file.exists(file)){
- 
+ setwd("..")
   source("../simulation.R")
+  setwd(cur_dir)
    
 } else {
   
@@ -321,43 +332,44 @@ if (!file.exists(file)){
 ```
 
 
+
 ```{r}
 data %>% 
   mutate(estimation_method = if_else(estimation_method == "Bayesian logit model, beta ~ t(1, 0, 2.5)", "Bayesian logit model, beta ~ Cauchy(0, 2.5)", estimation_method)) %>% ## the same but more straightforward
   group_by(estimation_method) %>%
-  summarise(`Bias averaged over the 275 populations (#samples = 1000)` = mean(bias),
-            `MSE averaged over the 275 populations (#samples = 1000)` = mean(mse),
-            `Coverage probability averaged over the 275 populations (#samples = 1000)` = mean(coverage_probability)) %>%
+  summarise(`Bias averaged over the 55 populations (#samples = 1000)` = mean(bias),
+            `MSE averaged over the 55 populations (#samples = 1000)` = mean(mse),
+            `Coverage probability averaged over the 55 populations (#samples = 1000)` = mean(coverage_probability)) %>%
   rename(`estimation method` = estimation_method) %>%
-  arrange(abs(`Bias averaged over the 275 populations (#samples = 1000)`)) %>%
+  arrange(abs(`Bias averaged over the 55 populations (#samples = 1000)`)) %>%
   kbl(caption = "findings") %>%
-  kable_paper(full_width = F, html_font = "Cambria", font_size = 20)
+  kable_classic_2(full_width = F, html_font = "Cambria", font_size = 20)
 
 ```
 
 
-```{r, fig.cap="Expected value of beta and its variance"}
-data %>%
+
+```{r, fig.cap="Expected value of beta and simulation standard error"}
+data %>% # same but more straight forward
+  mutate(estimation_method = if_else(str_detect(estimation_method, "1, 0"), "Bayesian logit model, beta ~ Cauchy(0, 2.5)", estimation_method)) %>%
   ggplot(aes(true_beta, ev_beta, color = estimation_method)) + 
   geom_point() + 
   geom_errorbar(aes(ymax = ev_beta + mcse, ymin = ev_beta - mcse), position = "dodge") + 
-  facet_wrap(~estimation_method, scales = "free") +
-  labs(caption = "Error bars are computed using the monte carlo standard error of the 1000 simulations for each 275 beta value.",
+  facet_wrap(~estimation_method, scales = "free") + 
+  theme(strip.text.x = element_blank()) +
+  labs(caption = "Error bars are computed |nusing the monte carlo standard error of the 1000 simulations for each of the 55 beta values.",
        color = "estimation method",
        y = "Expected value of the estimated betas",
-       x = "True beta")
+       x = "True beta") +
+  theme(legend.position =  c(0.85, 0.2),
+          legend.direction = "vertical")
 ```
 
 
-```{r, fig.cap="Distribution of bias"}
-data %>% 
-  mutate(estimation_method = if_else(estimation_method == "Bayesian logit model, beta ~ t(1, 0, 2.5)", "Bayesian logit model, beta ~ Cauchy(0, 2.5)", estimation_method)) %>%
-  mutate(is_mle = if_else(estimation_method == "Maximum Likelihood Estimation", "MLE", "Other")) %>%
-  ggplot(aes(bias, fill = estimation_method, color = estimation_method)) + 
-  geom_density(alpha = .6) + 
-  facet_wrap(~is_mle, scales = "free")
 
-```
 
+* With *separated samples* MLE provides very biased estimates of the population parameter
+* PML and assigning prior distributions to the parameter curb this problem
+* Bayesian approaches yielded less biased estimates than PML, except in the case of $\beta \sim Cauchy(0, 2.5)$
 
 # References
