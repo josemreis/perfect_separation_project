@@ -264,9 +264,9 @@ coverage_probability <- function(ci_upper, ci_lower, true_beta){
 }
 
 ### fit glm
-fit_glm <- function(samples) {
+fit_glm <- function(samples, link_function = c("logit", "probit", "identity")) {
   ################################################################################
-  # fit simulated samples with separation issues and evaluate performance using MLE
+  # fit simulated samples with separation issues and evaluate performance using MLE (logit or probit link functions)
   # confint method: "wald"
   # NA since they do not exist
   # inference performance metrics
@@ -278,6 +278,7 @@ fit_glm <- function(samples) {
   # * coverage_probability: \frac{1}{n_sim}\sum_{i=1}^nI(\^{\beta}_{i,\lower} \leq \beta \geq \beta}_{i,\upper})
   # Args:
   # 1) list containing data frames
+  # 2) link: chr, link function
   # output:
   # tibble
   ################################################################################
@@ -287,7 +288,7 @@ fit_glm <- function(samples) {
   est_beta <- est_alpha <- est_se <- ci_upper <- ci_lower <- numeric(length = n)
   for (i in seq_along(samples)) {
     df <- samples[[i]]
-    fit <- glm(formula = y ~ x, family = binomial("logit"), data = df)
+    fit <- glm(formula = y ~ x, family = binomial(link = link_function), data = df)
     est_beta[i] <- coef(fit)[2] # fetch the estimated beta
     est_alpha[i] <-coef(fit)[1] # fetch the estimated intercept
     est_se[i] <- sqrt(diag(vcov(fit))) # fetch the standard-errors (sqrt of the diagonal of the var-cov matrix)
@@ -503,7 +504,7 @@ run_simulation <- function(bottom_up = FALSE, sep_treshold =  1000, random_sampl
     samples <- get_samples(df = pop, n = n_samples, seed = seed, all = complete)
     ## run the simulations
     # make the filenames
-    model_names <- c("glm", "pml", "bayes_cauchy", "bayes_student_t", "bayes_normal_weakly_informative")
+    model_names <- c("glm_logit", "glm_identity", "glm_probit", "pml", "bayes_cauchy", "bayes_student_t", "bayes_normal_weakly_informative")
     filenames <- map_chr(model_names, ~paste0(sprintf("results/simulation/output/%s_results_",.x), str_remove(str_split(names(df_list[pop_i]), "data/")[[1]][2], ".gz"))) %>%
       set_names(model_names)
     # run
@@ -511,8 +512,12 @@ run_simulation <- function(bottom_up = FALSE, sep_treshold =  1000, random_sampl
       file <- filenames[model]
       if (!file.exists(file)) {
         cat(sprintf("\n> Fitting %s model on the the samples with separation from population %s\n\n", model, samples[[1]]$population_id[1]))
-        if (model ==  "glm") {
-          out <- fit_glm(samples = samples)
+        if (model ==  "glm_logit") {
+          out <- fit_glm(samples = samples, link_function = "logit")
+        } else if (model == "glm_identity") {
+          out <- fit_glm(samples = samples, link_function = "identity")
+        } else if (model == "glm_probit") {
+          out <- fit_glm(samples = samples, link_function = "probit")
         } else if (model == "pml") {
           out <- fit_f(samples = samples)
         } else if (model == "bayes_cauchy") {
