@@ -8,7 +8,4 @@ purrr
 dplyr
 stringr
 forcats
-future
-furrr
-hrbrthemes
 kableExtra

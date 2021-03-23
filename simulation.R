@@ -291,6 +291,7 @@ fit_glm <- function(samples, link_function = c("logit", "probit", "identity")) {
     if (link_function != "identity") {
       fit <- glm(formula = y ~ x, family = binomial(link = link_function), data = df)
     } else {
+      ## glm with identity link kept throwing non convergence related errors, run the LPM using a normal ols
       fit <- lm(formula = y ~ x, data = df)
     }
     est_beta[i] <- coef(fit)[2] # fetch the estimated beta
@@ -309,7 +310,11 @@ fit_glm <- function(samples, link_function = c("logit", "probit", "identity")) {
     sample_size = unique(df$sample_size),
     n_trials = n,
     pop_id = unique(df$population_id),
-    estimation_method = "Maximum Likelihood Estimation",
+    estimation_method = case_when(
+      link_function == "identity" ~ "MLE lpm",
+      link_function == "logit" ~ "MLE logit",
+      link_function == "probit" ~ "MLE probit"
+    ),
     point_estimate = "MLE",
     ci_method = "wald",
     ci_alpha = 0.95,
@@ -321,7 +326,7 @@ fit_glm <- function(samples, link_function = c("logit", "probit", "identity")) {
     percent_bias = 100*(ev_beta/true_beta - 1),
     empirical_variance_beta = var(est_beta),
     empirical_sd_beta = sd(est_beta),
-    mse = mean((est_beta - true_beta)^2),
+    mse = var(est_beta) + (ev_beta - true_beta)^2,
     mcse = sd(est_beta)/sqrt(n)
   )
   
@@ -381,7 +386,7 @@ fit_f <- function(samples) {
     percent_bias = 100*(ev_beta/true_beta - 1),
     empirical_variance_beta = var(est_beta),
     empirical_sd_beta = sd(est_beta),
-    mse = mean((est_beta - true_beta)^2),
+    mse = var(est_beta) + (ev_beta - true_beta)^2,
     mcse = sd(est_beta)/sqrt(n)
   )
   
@@ -399,7 +404,7 @@ fit_b <- function(samples, beta_prior = student_t(df = 1, location = 0, scale = 
   # * bias: E[\^{\beta}] - \beta
   # * bias %: 100 \times (\frac{\^{\beta}}{\beta} - 1)
   # * variance of estimates: var(\^{\beta})
-  # * Mean-squared error: E[bias(\^{\beta})^2] var(\^{\beta}) + [Bias(\^{\beta})]^2
+  # * Mean-squared error: var(\^{\beta}) + [Bias(\^{\beta})]^2
   # * Monte Carlo Standard Error Error: \sqrt{var(\^{\beta})}; see: https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&cad=rja&uact=8&ved=2ahUKEwjA6-D81pbvAhVO4YUKHXJ_DJ8QFjAAegQIBxAD&url=https%3A%2F%2Fwww.ncbi.nlm.nih.gov%2Fpmc%2Farticles%2FPMC3337209%2F&usg=AOvVaw1MmJaBCHVx0Ig2oiFGlCwg
   # * coverage_probability: \frac{1}{n_sim}\sum_{i=1}^nI(\^{\beta}_{i,\lower} \leq \beta \geq \beta}_{i,\upper})
   # Args:
@@ -459,7 +464,7 @@ fit_b <- function(samples, beta_prior = student_t(df = 1, location = 0, scale = 
     percent_bias = 100*((ev_beta/true_beta) - 1),
     empirical_variance_beta = var(est_beta),
     empirical_sd_beta = sd(est_beta),
-    mse = mean((est_beta - true_beta)^2),
+    mse = var(est_beta) + (ev_beta - true_beta)^2,
     mcse = sd(est_beta)/sqrt(n)
   )
   
