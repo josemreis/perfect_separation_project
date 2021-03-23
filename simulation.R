@@ -288,7 +288,11 @@ fit_glm <- function(samples, link_function = c("logit", "probit", "identity")) {
   est_beta <- est_alpha <- est_se <- ci_upper <- ci_lower <- numeric(length = n)
   for (i in seq_along(samples)) {
     df <- samples[[i]]
-    fit <- glm(formula = y ~ x, family = binomial(link = link_function), data = df)
+    if (link_function != "identity") {
+      fit <- glm(formula = y ~ x, family = binomial(link = link_function), data = df)
+    } else {
+      fit <- lm(formula = y ~ x, data = df)
+    }
     est_beta[i] <- coef(fit)[2] # fetch the estimated beta
     est_alpha[i] <-coef(fit)[1] # fetch the estimated intercept
     est_se[i] <- sqrt(diag(vcov(fit))) # fetch the standard-errors (sqrt of the diagonal of the var-cov matrix)
@@ -513,22 +517,25 @@ run_simulation <- function(bottom_up = FALSE, sep_treshold =  1000, random_sampl
       if (!file.exists(file)) {
         cat(sprintf("\n> Fitting %s model on the the samples with separation from population %s\n\n", model, samples[[1]]$population_id[1]))
         if (model ==  "glm_logit") {
-          out <- fit_glm(samples = samples, link_function = "logit")
+          out <- try(fit_glm(samples = samples, link_function = "logit"))
         } else if (model == "glm_identity") {
-          out <- fit_glm(samples = samples, link_function = "identity")
+          out <- try(fit_glm(samples = samples, link_function = "identity"))
         } else if (model == "glm_probit") {
-          out <- fit_glm(samples = samples, link_function = "probit")
+          out <- try(fit_glm(samples = samples, link_function = "probit"))
         } else if (model == "pml") {
-          out <- fit_f(samples = samples)
+          out <- try(fit_f(samples = samples))
         } else if (model == "bayes_cauchy") {
-          out <- fit_b(samples = samples, beta_prior = cauchy(location = 0, scale = 2.5), alpha_prior = student_t(df = 1, location = 0, scale = 10), gelman_transform = TRUE)
+          out <- try(fit_b(samples = samples, beta_prior = cauchy(location = 0, scale = 2.5), alpha_prior = student_t(df = 1, location = 0, scale = 10), gelman_transform = TRUE))
         } else if (model == "bayes_student_t") {
-          out <- fit_b(samples = samples, beta_prior = student_t(df = 7), alpha_prior = student_t(df = 1, location = 0, scale = 10), gelman_transform = FALSE)
+          out <- try(fit_b(samples = samples, beta_prior = student_t(df = 7), alpha_prior = student_t(df = 1, location = 0, scale = 10), gelman_transform = FALSE))
         } else {
-          out <- fit_b(samples = samples, beta_prior = normal(location = 0, 2.5), alpha_prior = student_t(df = 1, location = 0, scale = 10), gelman_transform = FALSE) 
+          out <- try(fit_b(samples = samples, beta_prior = normal(location = 0, 2.5), alpha_prior = student_t(df = 1, location = 0, scale = 10), gelman_transform = FALSE))
         }
         ## export
-        write_csv(out, file)
+        if (class(out) != "try-error") {
+          write_csv(out, file)
+        }
+        
       }
       
     }
