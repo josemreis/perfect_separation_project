@@ -373,7 +373,7 @@ data %>% # same but more straight forward
   theme(legend.position =  c(0.7, 0.1),
           legend.direction = "vertical")
 
-
+## ridge plots
 # data %>% # same but more straight forward
 #   mutate(estimation_method = if_else(str_detect(estimation_method, "1, 0"), "Bayesian logit model, beta ~ Cauchy(0, 2.5)", estimation_method)) %>%
 #   select(estimation_method, mse, bias, variance = empirical_variance_beta) %>%
@@ -390,6 +390,24 @@ data %>% # same but more straight forward
 #        y = "estimation method") + 
 #   scale_fill_discrete(guide=FALSE) + 
 #   facet_wrap(~metric)
+#
+## monte carlo error included
+# data %>% # same but more straight forward
+#   mutate(estimation_method = if_else(str_detect(estimation_method, "1, 0"), "Bayesian logit model, beta ~ Cauchy(0, 2.5)", estimation_method)) %>%
+#   select(estimation_method, mse, bias, variance = empirical_variance_beta, mcse) %>%
+#   pivot_longer(cols = c(mse, bias, variance, mcse), names_to = "metric", values_to = "value") %>%
+#   ggplot()  +
+#   ggridges::geom_density_ridges(aes(
+#     x = value,
+#     y = estimation_method,
+#     fill = estimation_method),
+#     rel_min_height = 0.01,
+#     alpha = 0.6) +
+#   theme_minimal() +
+#   labs(x = "metric logged",
+#        y = "estimation method") + 
+#   scale_fill_discrete(guide=FALSE) + 
+#   facet_wrap(~metric, scales = "free")
 
 ```
 
