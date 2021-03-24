@@ -16,7 +16,7 @@ bibliography: skeleton.bib
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, cache = TRUE, error = FALSE, fig.align="center", message = FALSE, fig.height = 8, fig.width = 10)
 ### packages
-packs <- c("tidyverse", "kableExtra")
+packs <- c("tidyverse", "kableExtra", "ggridges")
 for (pack in packs) {
   
   if (pack %in% installed.packages()){
