@@ -5,8 +5,8 @@ author:
   name: José Reis
 affiliation:
   address: "data and code at https://github.com/josemreis/separation_project"
-column_numbers: 4
-body_textsize: "22pt"
+column_numbers: 5
+body_textsize: "20pt"
 output: 
   posterdown::posterdown_html:
     self_contained: false
@@ -14,7 +14,7 @@ bibliography: skeleton.bib
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, cache = TRUE, error = FALSE, fig.align="center", message = FALSE, fig.height = 8, fig.width = 10)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, cache = TRUE, error = FALSE, fig.align="center", message = FALSE, fig.height = 8, fig.width = 8)
 ### packages
 packs <- c("tidyverse", "kableExtra", "ggridges")
 for (pack in packs) {
@@ -372,25 +372,29 @@ data %>% # same but more straight forward
        x = "True beta") +
   theme(legend.position =  c(0.7, 0.1),
           legend.direction = "vertical")
+```
+
+
+```{r, fig.cap="distribution of the MSE and variance of the estimators"}
 
 ## ridge plots
-# data %>% # same but more straight forward
-#   mutate(estimation_method = if_else(str_detect(estimation_method, "1, 0"), "Bayesian logit model, beta ~ Cauchy(0, 2.5)", estimation_method)) %>%
-#   select(estimation_method, mse, bias, variance = empirical_variance_beta) %>%
-#   pivot_longer(cols = c(mse, bias, variance), names_to = "metric", values_to = "value") %>%
-#   ggplot()  +
-#   ggridges::geom_density_ridges(aes(
-#     x = log(value),
-#     y = estimation_method,
-#     fill = estimation_method),
-#     rel_min_height = 0.01,
-#     alpha = 0.6) +
-#   theme_minimal() +
-#   labs(x = "metric logged",
-#        y = "estimation method") + 
-#   scale_fill_discrete(guide=FALSE) + 
-#   facet_wrap(~metric)
-#
+data %>% # same but more straight forward
+  mutate(estimation_method = if_else(str_detect(estimation_method, "1, 0"), "Bayesian logit model, beta ~ Cauchy(0, 2.5)", estimation_method)) %>%
+  select(estimation_method, mse, variance = empirical_variance_beta) %>%
+  pivot_longer(cols = c(mse, variance), names_to = "metric", values_to = "value") %>%
+  ggplot()  +
+  ggridges::geom_density_ridges(aes(
+    x = log(value),
+    y = estimation_method,
+    fill = estimation_method),
+    rel_min_height = 0.01,
+    alpha = 0.6) +
+  theme_minimal() +
+  labs(x = "metric logged",
+       y = "estimation method") +
+  scale_fill_discrete(guide=FALSE) +
+  facet_wrap(~metric)
+
 ## monte carlo error included
 # data %>% # same but more straight forward
 #   mutate(estimation_method = if_else(str_detect(estimation_method, "1, 0"), "Bayesian logit model, beta ~ Cauchy(0, 2.5)", estimation_method)) %>%
@@ -410,8 +414,6 @@ data %>% # same but more straight forward
 #   facet_wrap(~metric, scales = "free")
 
 ```
-
-
 
 
 * With *separated samples* MLE provides very biased estimates of the population parameter
