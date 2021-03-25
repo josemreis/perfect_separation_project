@@ -6,7 +6,7 @@ author:
 affiliation:
   address: "data and code at https://github.com/josemreis/separation_project"
 column_numbers: 5
-body_textsize: "20pt"
+body_textsize: "23pt"
 output: 
   posterdown::posterdown_html:
     self_contained: false
@@ -417,7 +417,7 @@ data %>% # same but more straight forward
 
 
 * With *separated samples* MLE provides very biased estimates of the population parameter
-* PML and assigning prior distributions to the parameter curb this problem. Within the realm of MLE methods, the linear probability model seems to be drastically superior than the logistic and probit models.
+* PML and assigning prior distributions to the parameter curb this problem. Within the realm of MLE methods, the linear probability model seems to be drastically superior to the logistic and probit models.
 * Bayesian approaches yielded less biased estimates than PML, except in the case of $\beta \sim Cauchy(0, 2.5)$
 
 # References
