@@ -1,12 +1,13 @@
 ---
 title: "Separation and non-identification in logistic regression models: a simulation study"
-subtitle: "test"
 author:
   name: José Reis
 affiliation:
   address: "data and code at https://github.com/josemreis/separation_project"
 column_numbers: 5
-body_textsize: "23pt"
+body_textsize: "22pt"
+poster_height: "39in"
+poster_width: "49in"
 output: 
   posterdown::posterdown_html:
     self_contained: false
